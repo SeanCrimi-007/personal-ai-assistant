@@ -1,0 +1,14 @@
+[
+  {
+    "description": "take out the trash",
+    "completed": false
+  },
+  {
+    "description": "a reminder to be cool in 10 mins",
+    "completed": false
+  },
+  {
+    "description": "feed cats",
+    "completed": false
+  }
+]
