@@ -1,0 +1,16 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+
+# Virtual environment
+.venv/
+
+# IDE settings
+.idea/
+.vscode/
+
+# Local config
+.env
+
+# Task data
+tasks.json
