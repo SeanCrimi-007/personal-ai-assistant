@@ -1,9 +1,12 @@
 import openai
 import requests
 
-# Set your OpenAI API key here (keep it secret!)
+from dotenv import load_dotenv
 import os
-openai.api_key = os.getenv("OPENAI_API_KEY")
+
+load_dotenv()
+
+groq_api_key = os.getenv("GROQ_API_KEY")
 
 def get_weather(city):
     # Free weather API example (Open-Meteo, no API key needed)

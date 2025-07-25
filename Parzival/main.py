@@ -1,70 +1,98 @@
-from gpt_parser import interpret_command
+import tkinter as tk
+from tkinter import ttk
 import pyttsx3
 import speech_recognition as sr
-from task_manager import handle_command
-import time
+import atexit
+from task_manager import TaskManagerGUI
+from gpt_parser import interpret_command
+from ai_weather_panel import AIWeatherPanel
+from icloud_sync import add_reminder
+from meal_tracker_tab import MealTrackerTab
 
-# Initialize text-to-speech
-engine = pyttsx3.init()
-voices = engine.getProperty('voices')
+# Add a reminder 1 day from now
+add_reminder("Review AI Assistant notes")
 
-# Optional: Select a deeper or British male voice if available
-for voice in voices:
+# ========== TTS Setup ==========
+tts_engine = pyttsx3.init()
+tts_engine.setProperty('rate', 180)
+
+# Optional: Choose a preferred voice
+for voice in tts_engine.getProperty('voices'):
     if "David" in voice.name or "UK English" in voice.name:
-        engine.setProperty('voice', voice.id)
+        tts_engine.setProperty('voice', voice.id)
         break
 
+# ========== Speech Recognition Setup ==========
+recognizer = sr.Recognizer()
 
 def speak(text):
-    print("Assistant:", text)
-    engine.say(text)
-    engine.runAndWait()
-
+    try:
+        print(f"Assistant: {text}")
+        tts_engine.say(text)
+        tts_engine.runAndWait()
+    except RuntimeError as e:
+        if str(e) != 'run loop already started':
+            raise
 
 def listen():
-    recognizer = sr.Recognizer()
     with sr.Microphone() as source:
         print("🎙️ Listening...")
         speak("Listening.")
         try:
             audio = recognizer.listen(source, timeout=5, phrase_time_limit=5)
-            user_input = recognizer.recognize_google(audio)
-            return user_input.lower()
+            return recognizer.recognize_google(audio).lower()
         except sr.WaitTimeoutError:
-            print("⏳ Listening timed out...")
-            return None
+            print("⏳ Listening timed out.")
         except sr.UnknownValueError:
-            print("❌ Could not understand audio.")
             speak("Sorry, I didn't catch that.")
-            return None
         except sr.RequestError as e:
-            print(f"🔌 Could not request results; {e}")
             speak("There was a problem with the speech recognition service.")
-            return None
+        return None
 
+# ========== Command Handling ==========
+def handle_command(command):
+    if "add task" in command:
+        desc = command.replace("add task", "").strip()
+        if desc:
+            speak(f"Task added: {desc}")
+            # Actual task addition is handled in the TaskManagerGUI via voice button
+            return f"Task added: {desc}"
+        return "Please provide a task description."
 
-if __name__ == "__main__":
-    speak("Hello, I am your task assistant. What would you like me to do?")
+    elif "remove all tasks" in command:
+        # Voice command for mass removal is not safe — skip for now
+        return "Please use the task tab to remove tasks safely."
 
+    return "Sorry, I didn't understand that command."
+
+# ========== Cleanup ==========
+@atexit.register
+def cleanup():
     try:
-        while True:
-            user_input = listen()
-            if not user_input:
-                continue
+        tts_engine.stop()
+    except Exception:
+        pass
 
-            print(f"You said: {user_input}")
-            command = interpret_command(user_input)
-            if command.strip().lower().startswith("quit"):
-                speak("Goodbye!")
-                break
-            response = handle_command(command)
-            if response and response.lower() != "error":
-                speak(response)
-                print(f"Assistant: {response}")
+# ========== GUI Setup ==========
+if __name__ == "__main__":
+    root = tk.Tk()
+    root.title("Parzival AI Assistant")
+    root.geometry("700x600")
 
-            time.sleep(1)
+    notebook = ttk.Notebook(root)
+    notebook.pack(expand=True, fill="both")
 
-    except KeyboardInterrupt:
-        print("\n👋 Exiting...")
-        speak("Shutting down. Goodbye.")
-        time.sleep(1)
+    # 🍽 Meal Tracker Tab
+    meal_tab = MealTrackerTab(notebook)
+    notebook.add(meal_tab, text="Meal Tracker")
+
+    # 🗂 Tasks Tab
+    task_frame = tk.Frame(notebook, bg="#1e1e1e")
+    TaskManagerGUI(task_frame)
+    notebook.add(task_frame, text="🗂 Tasks")
+
+    # 🌦 AI + Weather Tab
+    weather_frame = AIWeatherPanel(notebook)
+    notebook.add(weather_frame, text="🌦 AI + Weather")
+
+    root.mainloop()
