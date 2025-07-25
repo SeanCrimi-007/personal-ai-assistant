@@ -1,0 +1,20 @@
+[
+  {
+    "description": "be cool",
+    "completed": true,
+    "priority": "Normal",
+    "deadline": "2025-04-07"
+  },
+  {
+    "description": "be cool",
+    "completed": false,
+    "priority": "Normal",
+    "deadline": "No deadline"
+  },
+  {
+    "description": "test 1",
+    "completed": false,
+    "priority": "Normal",
+    "deadline": "No deadline"
+  }
+]
